@@ -1,28 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:noise_detecter/main.dart';
+import 'package:noise_detecter/screens/home.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-class BottomBar extends StatelessWidget {
+class BottomBar extends StatefulWidget {
   const BottomBar({Key? key}) : super(key: key);
+
+  @override
+  State<BottomBar> createState() => _BottomBarState();
+}
+
+class _BottomBarState extends State<BottomBar> {
   @override
   Widget build(BuildContext context) {
-    var itRoute = ModalRoute.of(context)?.settings.name;
-    ifActiveMicButton() {
-      if (itRoute == '/') {
+    String thisRoute() => ModalRoute.of(context)?.settings.name ?? '/';
+
+    activeButtonColor(String route) {
+      if (route == thisRoute()) {
         return const Color.fromARGB(255, 230, 230, 230);
       }
       return Colors.transparent;
     }
 
-    ifActiveSavesButton() {
-      if (itRoute == '/saves') {
-        return const Color.fromARGB(255, 230, 230, 230);
-      }
-      return Colors.transparent;
+    getIsRecording() {
+      return context.findAncestorStateOfType<HomeState>()?.isRecording;
+    }
+
+    void getOnStart() {
+      context.findAncestorStateOfType<HomeState>()?.start();
+    }
+
+    void getOnStop() {
+      context.findAncestorStateOfType<HomeState>()?.stop();
     }
 
     return Row(
       children: [
         Material(
-          color: ifActiveMicButton(),
+          color: null,
           borderRadius: const BorderRadius.only(
             topRight: Radius.circular(18),
             topLeft: Radius.circular(18),
@@ -50,7 +65,7 @@ class BottomBar extends StatelessWidget {
           ),
         ),
         Material(
-          color: ifActiveSavesButton(),
+          color: activeButtonColor(AllRoutes.home),
           borderRadius: const BorderRadius.only(
             topRight: Radius.circular(18),
             topLeft: Radius.circular(18),
@@ -59,9 +74,20 @@ class BottomBar extends StatelessWidget {
             hoverColor: Colors.amber[900],
             focusColor: Colors.red[900],
             splashColor: Colors.indigo,
-            onTap: () {
-              if (itRoute != '/') {
+            onTap: () async {
+              if (thisRoute() != '/') {
                 Navigator.of(context).pushNamed('/');
+              }
+              if (thisRoute() == '/' &&
+                  await Permission.microphone.status.isDenied) {
+                await Permission.microphone.request();
+              }
+              print('Результат: ${await Permission.microphone.status}');
+              print('идет запить ${getIsRecording()}');
+              if (getIsRecording() == false) {
+                getOnStart();
+              } else if (getIsRecording() == true) {
+                getOnStop();
               }
             },
             borderRadius: const BorderRadius.only(
@@ -82,7 +108,7 @@ class BottomBar extends StatelessWidget {
           ),
         ),
         Material(
-          color: ifActiveSavesButton(),
+          color: activeButtonColor(AllRoutes.saves),
           borderRadius: const BorderRadius.only(
             topRight: Radius.circular(18),
             topLeft: Radius.circular(18),
@@ -92,7 +118,7 @@ class BottomBar extends StatelessWidget {
             focusColor: Colors.red[900],
             splashColor: Colors.indigo,
             onTap: () {
-              if (itRoute != '/saves') {
+              if (thisRoute() != '/saves') {
                 Navigator.of(context).pushNamed('/saves');
               }
             },
@@ -114,7 +140,7 @@ class BottomBar extends StatelessWidget {
           ),
         ),
         Material(
-          color: ifActiveSavesButton(),
+          color: activeButtonColor(AllRoutes.settings),
           borderRadius: const BorderRadius.only(
             topRight: Radius.circular(18),
             topLeft: Radius.circular(18),
